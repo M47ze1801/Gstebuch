@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lara · 18 · Das Gästebuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #14080e;
+    --bg-2: #1f1018;
+    --bg-3: #2a1420;
+    --bg-card: rgba(28, 14, 22, 0.72);
+    --bg-input: rgba(10, 4, 8, 0.55);
+    --gold: #c9a86a;
+    --gold-light: #e8d5a3;
+    --gold-deep: #a8884d;
+    --silver: #b8c2cc;
+    --silver-light: #e4eaf0;
+    --silver-deep: #7d8894;
+    --cream: #f2e8d8;
+    --cream-dim: #c8bda8;
+    --muted: #8a6273;
+    --border: rgba(201, 168, 106, 0.28);
+    --border-strong: rgba(201, 168, 106, 0.55);
+    --border-silver: rgba(184, 194, 204, 0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 17px;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201, 168, 106, 0.09), transparent 65%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(184, 194, 204, 0.06), transparent 65%),
+      linear-gradient(160deg, #14080e 0%, #1f1018 40%, #221222 70%, #14080e 100%);
+    background-attachment: fixed;
+    color: var(--cream);
+    min-height: 100vh;
+    padding: 40px 20px 30px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Ambient Sparkle Layer ---------- */
+  .sparkle-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .sparkle-layer .sp {
+    position: absolute;
+    font-family: 'Playfair Display', serif;
+    line-height: 1;
+    animation: floatSparkle linear infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes floatSparkle {
+    0%   { transform: translateY(0) rotate(0deg) scale(1);   opacity: 0; }
+    15%  { opacity: var(--sp-op, 0.5); }
+    50%  { transform: translateY(-24px) rotate(90deg) scale(1.25); opacity: var(--sp-op, 0.5); }
+    85%  { opacity: var(--sp-op, 0.5); }
+    100% { transform: translateY(-48px) rotate(180deg) scale(1); opacity: 0; }
+  }
+
+  /* ---------- QR FAB ---------- */
+  .qr-fab {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 50;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    background:
+      linear-gradient(135deg, rgba(28, 14, 22, 0.95), rgba(20, 8, 14, 0.95));
+    color: var(--gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      0 6px 24px rgba(0, 0, 0, 0.4),
+      inset 0 0 12px rgba(201, 168, 106, 0.1);
+    transition: all 0.35s cubic-bezier(0.3, 0.9, 0.4, 1);
+    overflow: hidden;
+  }
+  .qr-fab::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+      transparent, rgba(232, 213, 163, 0.5), transparent 30%,
+      transparent 50%, rgba(228, 234, 240, 0.4), transparent 80%);
+    animation: rotateGlow 5s linear infinite;
+    opacity: 0.6;
+  }
+  @keyframes rotateGlow {
+    to { transform: rotate(360deg); }
+  }
+  .qr-fab svg { position: relative; z-index: 1; }
+  .qr-fab:hover {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--bg-1);
+    border-color: var(--gold-light);
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 32px rgba(201, 168, 106, 0.45),
+      inset 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+
+  /* ---------- Layout ---------- */
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-top: 24px;
+  }
+
+  .eyebrow {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-bottom: 28px;
+    padding-left: 0.55em;
+    opacity: 0.9;
+  }
+
+  /* ---------- H1 mit Silber-Gold-Shimmer ---------- */
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(64px, 13vw, 108px);
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    background: linear-gradient(100deg,
+      var(--gold-deep) 0%,
+      var(--gold-light) 18%,
+      var(--silver-light) 33%,
+      var(--silver) 45%,
+      var(--gold) 60%,
+      var(--gold-light) 75%,
+      var(--silver-light) 88%,
+      var(--gold-deep) 100%);
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--gold);
+    animation: metalShimmer 10s linear infinite;
+    filter: drop-shadow(0 2px 20px rgba(201, 168, 106, 0.15));
+  }
+  @keyframes metalShimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  /* ---------- Ornament mit Zahl 18 ---------- */
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    margin: 26px 0 22px;
+  }
+  .ornament .line {
+    height: 1px;
+    width: 54px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--silver-deep) 20%,
+      var(--gold) 50%,
+      var(--silver-deep) 80%,
+      transparent);
+    opacity: 0.8;
+  }
+  .ornament .numeral {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: 0.15em;
+    padding-left: 0.15em;
+    line-height: 1;
+    background: linear-gradient(90deg,
+      var(--gold-deep), var(--gold-light), var(--silver-light), var(--gold), var(--gold-deep));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: metalShimmer 7s linear infinite;
+  }
+
+  .subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: var(--cream-dim);
+    letter-spacing: 0.15em;
+    font-weight: 400;
+  }
+
+  /* ---------- Karte ---------- */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 44px 36px 38px;
+    position: relative;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    margin-bottom: 44px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--silver-deep) 15%,
+      var(--gold) 35%,
+      var(--gold-light) 50%,
+      var(--gold) 65%,
+      var(--silver-deep) 85%,
+      transparent);
+    background-size: 200% auto;
+    animation: metalShimmer 6s linear infinite;
+    opacity: 0.85;
+  }
+  .card::after {
+    content: "✦";
+    position: absolute;
+    top: -8px;
+    right: 18px;
+    font-size: 12px;
+    color: var(--silver-light);
+    opacity: 0.5;
+    text-shadow: 0 0 8px rgba(228, 234, 240, 0.8);
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.85); }
+    50%      { opacity: 0.9; transform: scale(1.15); }
+  }
+
+  .card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 25px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .card h2::after {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--silver), var(--gold), transparent);
+    margin: 16px auto 32px;
+    opacity: 0.7;
+  }
+
+  /* ---------- Formular ---------- */
+  label {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  input[type="text"], input[type="url"], textarea {
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    background: var(--bg-input);
+    border: 1px solid rgba(201, 168, 106, 0.22);
+    border-radius: 2px;
+    color: var(--cream);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.5;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+  input::placeholder, textarea::placeholder {
+    color: rgba(200, 189, 168, 0.35);
+    font-style: italic;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--gold);
+    background: rgba(10, 4, 8, 0.8);
+    box-shadow:
+      0 0 0 3px rgba(201, 168, 106, 0.08),
+      0 0 20px rgba(201, 168, 106, 0.12);
+  }
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+    font-family: inherit;
+  }
+
+  /* ---------- Submit mit Lichtreflex ---------- */
+  #submitBtn {
+    width: 100%;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg,
+      var(--gold-deep) 0%,
+      var(--gold) 30%,
+      var(--silver-light) 50%,
+      var(--gold) 70%,
+      var(--gold-light) 100%);
+    background-size: 250% auto;
+    border: none;
+    border-radius: 2px;
+    color: var(--bg-1);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    box-shadow:
+      0 8px 28px rgba(201, 168, 106, 0.25),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+    padding-left: 0.38em;
+    animation: btnShimmer 6s linear infinite;
+  }
+  @keyframes btnShimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 250% 50%; }
+  }
+  #submitBtn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(120deg,
+      transparent,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent);
+    transform: skewX(-20deg);
+    transition: left 0.7s cubic-bezier(0.3, 0.9, 0.4, 1);
+  }
+  #submitBtn:hover::before { left: 130%; }
+  #submitBtn:hover {
+    box-shadow:
+      0 14px 40px rgba(201, 168, 106, 0.45),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  #submitBtn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+    animation-play-state: paused;
+  }
+
+  /* ---------- Foto (nur Kamera) ---------- */
+  .photo-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .photo-btn {
+    flex: 1;
+    min-width: 100%;
+    padding: 15px 13px;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--gold-light);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding-left: 0.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .photo-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+  }
+  .photo-btn::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(232, 213, 163, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.6s;
+  }
+  .photo-btn:hover::before { left: 130%; }
+  .photo-btn:hover {
+    border-color: var(--gold);
+    background: rgba(201, 168, 106, 0.06);
+    color: var(--gold);
+    box-shadow: 0 0 20px rgba(201, 168, 106, 0.15);
+  }
+  .photo-btn:hover svg { transform: scale(1.1); }
+
+  .photo-hint {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin-top: -8px;
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .photo-preview {
+    position: relative;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    background: rgba(10, 4, 8, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .photo-preview img {
+    width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+    display: block;
+  }
+  .photo-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(20, 8, 14, 0.9);
+    color: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(6px);
+  }
+  .photo-remove:hover {
+    background: var(--gold);
+    color: var(--bg-1);
+    border-color: var(--gold);
+  }
+  .photo-info {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ---------- Einträge ---------- */
+  .entries-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 27px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+    margin: 8px 0 6px;
+    letter-spacing: 0.01em;
+  }
+  .entries-title::after {
+    content: "";
+    display: block;
+    width: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), var(--silver), var(--gold));
+    margin: 14px auto 30px;
+    opacity: 0.6;
+  }
+
+  .entry {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--gold);
+    border-radius: 2px;
+    padding: 24px 26px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    position: relative;
+    animation: slideIn 0.55s cubic-bezier(0.3, 0.9, 0.4, 1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.4s, border-color 0.4s;
+  }
+  .entry:hover {
+    box-shadow:
+      0 12px 36px rgba(0, 0, 0, 0.3),
+      0 0 24px rgba(201, 168, 106, 0.12);
+    border-left-color: var(--gold-light);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .entry-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .entry-name {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--cream);
+    letter-spacing: 0.005em;
+  }
+  .entry-name::before {
+    content: "— ";
+    background: linear-gradient(90deg, var(--gold), var(--silver-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-style: normal;
+    margin-right: 2px;
+  }
+  .entry-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .entry-date {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .entry-message {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    color: var(--cream-dim);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-top: 4px;
+  }
+  .entry-photo {
+    width: 100%;
+    display: block;
+    margin-top: 12px;
+    border-radius: 1px;
+    border: 1px solid var(--border);
+  }
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1;
+    opacity: 0.6;
+  }
+  .delete-btn:hover {
+    color: var(--gold);
+    opacity: 1;
+  }
+
+  /* ---------- Leerer Zustand ---------- */
+  .empty {
+    text-align: center;
+    padding: 56px 30px;
+    background: rgba(28, 14, 22, 0.35);
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+  }
+  .empty-icon {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    letter-spacing: 0.6em;
+    margin-bottom: 22px;
+    padding-left: 0.6em;
+    background: linear-gradient(90deg, var(--gold), var(--silver-light), var(--gold));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: metalShimmer 5s linear infinite;
+  }
+  .empty-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-style: italic;
+    color: var(--cream-dim);
+    line-height: 1.7;
+  }
+  .empty-text small {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    padding-bottom: 30px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--muted);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding-left: 0.28em;
+  }
+  footer::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--silver), var(--gold), transparent);
+    margin: 0 auto 24px;
+    opacity: 0.5;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(5, 2, 4, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+  }
+  .modal.open { display: flex; }
+  .modal-content {
+    background: linear-gradient(160deg, #1f1018 0%, #2a1420 100%);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    padding: 42px 30px 34px;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(201, 168, 106, 0.08),
+      0 0 80px rgba(201, 168, 106, 0.08);
+    max-height: 92vh;
+    overflow-y: auto;
+    text-align: center;
+    animation: modalIn 0.4s cubic-bezier(0.3, 0.9, 0.4, 1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .modal-content::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent, var(--silver) 20%, var(--gold) 50%, var(--silver) 80%, transparent);
+    background-size: 200% auto;
+    animation: metalShimmer 5s linear infinite;
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .modal-close:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+    transform: rotate(90deg);
+    box-shadow: 0 0 16px rgba(201, 168, 106, 0.35);
+  }
+  .modal-content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--cream);
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+  }
+  .qr-hint {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--cream-dim);
+    margin-bottom: 26px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+  .qr-code-box {
+    background: #fff;
+    padding: 18px;
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+    width: fit-content;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 0 5px rgba(201, 168, 106, 0.08),
+      0 0 32px rgba(201, 168, 106, 0.15);
+    max-width: 100%;
+    position: relative;
+  }
+  .qr-code-box::before {
+    content: "✦";
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    font-size: 14px;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(201, 168, 106, 0.8);
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  .qr-code-box::after {
+    content: "✦";
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    font-size: 14px;
+    color: var(--silver);
+    text-shadow: 0 0 10px rgba(184, 194, 204, 0.8);
+    animation: twinkle 3s ease-in-out infinite 1.5s;
+  }
+  .qr-image {
+    width: 240px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  .qr-url {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    word-break: break-all;
+    margin-bottom: 20px;
+    padding: 9px 12px;
+    background: rgba(10, 4, 8, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    letter-spacing: 0.02em;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .qr-btn {
+    flex: 1;
+    min-width: 130px;
+    padding: 13px 18px;
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    color: var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding-left: 0.22em;
+  }
+  .qr-btn::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.6s;
+  }
+  .qr-btn:hover::before { left: 130%; }
+  .qr-btn:hover {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--bg-1);
+    border-color: var(--gold-light);
+  }
+  .qr-btn.qr-secondary {
+    border-color: var(--border);
+    color: var(--cream-dim);
+  }
+  .qr-btn.qr-secondary:hover {
+    background: rgba(201, 168, 106, 0.08);
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+  .qr-edit-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(10, 4, 8, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    text-align: left;
+  }
+  .qr-edit-panel label {
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+  .qr-edit-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .qr-edit-buttons .qr-btn { flex: 1; min-width: 110px; }
+  .qr-warning {
+    background: rgba(201, 168, 106, 0.08);
+    color: var(--cream-dim);
+    padding: 14px 16px;
+    border-radius: 1px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    border-left: 2px solid var(--gold);
+    text-align: left;
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .qr-warning strong {
+    display: block;
+    margin-bottom: 6px;
+    font-style: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 10px;
+    color: var(--gold);
+  }
+  .qr-loading, .qr-error {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--cream-dim);
+    padding: 20px;
+    font-size: 14px;
+  }
+  .qr-error { color: var(--gold-light); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 600px) {
+    body { padding: 78px 16px 30px; }
+    header { padding-top: 0; }
+    .card { padding: 34px 24px 28px; }
+    .card h2 { font-size: 22px; }
+    .entries-title { font-size: 24px; }
+    .modal-content { padding: 36px 22px 28px; }
+    .modal-content h2 { font-size: 21px; }
+    .qr-image { width: 200px; }
+    .qr-fab { top: 14px; right: 14px; width: 42px; height: 42px; }
+    h1 { font-size: clamp(60px, 18vw, 88px); }
+    .ornament .numeral { font-size: 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ---------- Druck ---------- */
+  @media print {
+    @page { margin: 15mm; }
+    body.printing-qr {
+      background: #fff !important;
+      padding: 0 !important;
+      color: #000 !important;
+    }
+    body.printing-qr > *:not(#qrModal) { display: none !important; }
+    body.printing-qr #qrModal {
+      position: static !important;
+      display: block !important;
+      background: #fff !important;
+      padding: 0 !important;
+      inset: auto !important;
+      backdrop-filter: none !important;
+      overflow: visible !important;
+    }
+    body.printing-qr #qrModal .modal-content {
+      box-shadow: none !important;
+      border: 2px solid #c9a86a !important;
+      max-width: 100% !important;
+      max-height: none !important;
+      padding: 32px !important;
+      margin: 0 !important;
+      animation: none !important;
+      background: #fff !important;
+    }
+    body.printing-qr #qrModal .modal-content h2 { color: #1f1018 !important; }
+    body.printing-qr #qrModal .qr-hint { color: #555 !important; }
+    body.printing-qr #qrModal .modal-close,
+    body.printing-qr #qrModal .modal-actions,
+    body.printing-qr #qrModal .qr-edit-panel,
+    body.printing-qr #qrModal .qr-url { display: none !important; }
+    body.printing-qr #qrModal .qr-code-box {
+      border: 1px solid #c9a86a !important;
+      box-shadow: none !important;
+      padding: 24px !important;
+      min-height: auto !important;
+    }
+    body.printing-qr #qrModal .qr-code-box::before,
+    body.printing-qr #qrModal .qr-code-box::after { display: none !important; }
+    body.printing-qr #qrModal .qr-image {
+      width: 340px !important;
+      height: auto !important;
+      image-rendering: pixelated;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div class="sparkle-layer" id="sparkleLayer"></div>
+
+  <button class="qr-fab" id="qrFab" title="Gästebuch teilen" aria-label="QR-Code anzeigen">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/>
+      <rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/>
+      <rect x="14" y="14" width="2" height="2" fill="currentColor" stroke="none"/>
+      <rect x="18" y="14" width="2" height="2" fill="currentColor" stroke="none"/>
+      <rect x="14" y="18" width="2" height="2" fill="currentColor" stroke="none"/>
+      <rect x="18" y="18" width="2" height="2" fill="currentColor" stroke="none"/>
+    </svg>
+  </button>
+
+  <div class="modal" id="qrModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" id="qrModalClose" aria-label="Schließen">✕</button>
+      <h2>Gästebuch teilen</h2>
+      <p class="qr-hint">Lass deine Gäste den Code scannen, um direkt einen Eintrag zu hinterlassen.</p>
+      <div class="qr-code-box" id="qrCodeBox">
+        <div class="qr-loading">Wird geladen …</div>
+      </div>
+      <div class="qr-url" id="qrUrlDisplay">…</div>
+      <div class="modal-actions">
+        <button type="button" class="qr-btn qr-secondary" id="qrEditBtn">URL ändern</button>
+        <button type="button" class="qr-btn" id="qrPrintBtn">Drucken</button>
+      </div>
+      <div class="qr-edit-panel" id="qrEditPanel" style="display:none;">
+        <label for="qrCustomUrl">Eigene Gästebuch-Adresse</label>
+        <input type="url" id="qrCustomUrl" placeholder="https://deine-seite.de/gaestebuch">
+        <div class="qr-edit-buttons">
+          <button type="button" class="qr-btn qr-secondary" id="qrResetUrlBtn">Zurücksetzen</button>
+          <button type="button" class="qr-btn" id="qrSaveUrlBtn">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="eyebrow">Das Gästebuch</div>
+      <h1>Lara</h1>
+      <div class="ornament">
+        <span class="line"></span>
+        <span class="numeral">18</span>
+        <span class="line"></span>
+      </div>
+      <p class="subtitle"></p>
+    </header>
+
+    <div class="card">
+      <h2>Hinterlasse eine Nachricht</h2>
+      <form id="guestbookForm">
+        <label for="name">Dein Name</label>
+        <input type="text" id="name" placeholder="Wie dürfen wir dich nennen?" required maxlength="50">
+
+        <label for="message">Deine Nachricht für Lara</label>
+        <textarea id="message" placeholder="Ein paar persönliche Worte zum 18. Geburtstag …" required maxlength="500"></textarea>
+
+        <label>Foto (optional)</label>
+        <div class="photo-buttons">
+          <button type="button" class="photo-btn" id="photoCameraBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            Foto aufnehmen
+          </button>
+        </div>
+        <input type="file" id="photoCameraInput" accept="image/*" capture="user" hidden>
+        <p class="photo-hint">Es öffnet sich direkt die Kamera. Du kannst ein Foto von dir aufnehmen.</p>
+
+        <div class="photo-preview" id="photoPreview" style="display:none;">
+          <img id="photoPreviewImg" alt="Foto-Vorschau">
+          <button type="button" class="photo-remove" id="photoRemoveBtn" title="Foto entfernen">✕</button>
+        </div>
+        <p class="photo-info" id="photoInfo" style="display:none;">
+          Name und Nachricht werden dem Foto hinzugefügt.
+        </p>
+
+        <button type="submit" id="submitBtn">Eintragen</button>
+      </form>
+    </div>
+
+    <h2 class="entries-title">Das Gästebuch</h2>
+    <div id="entriesContainer"></div>
+
+    <footer>Für Lara</footer>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+/* =========================================================
+   AMBIENT SPARKLES
+========================================================= */
+function initSparkles() {
+  const layer = document.getElementById('sparkleLayer');
+  const symbols = ['✦', '✧', '·', '◇'];
+  const count = window.innerWidth < 600 ? 14 : 24;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.className = 'sp';
+    const isGold = Math.random() > 0.45;
+    s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    const size = 4 + Math.random() * 9;
+    const dur = 7 + Math.random() * 12;
+    const delay = -Math.random() * 12;
+    const color = isGold ? '#e8d5a3' : '#c8d2dc';
+    const glow = isGold ? 'rgba(232,213,163,0.85)' : 'rgba(200,210,220,0.85)';
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.top = (Math.random() * 100) + '%';
+    s.style.fontSize = size + 'px';
+    s.style.color = color;
+    s.style.textShadow = '0 0 8px ' + glow + ', 0 0 2px ' + glow;
+    s.style.setProperty('--sp-op', (0.25 + Math.random() * 0.4).toFixed(2));
+    s.style.animationDuration = dur + 's';
+    s.style.animationDelay = delay + 's';
+    layer.appendChild(s);
+  }
+}
+
+/* =========================================================
+   GÄSTEBUCH
+========================================================= */
+const STORAGE_KEY = 'lara_guestbook_18';
+const MAX_PHOTO_CHARS = 260000;
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveEntries(entries) {
+  const json = JSON.stringify(entries);
+  if (json.length > 4.5 * 1024 * 1024) throw new Error('STORAGE_FULL');
+  localStorage.setItem(STORAGE_KEY, json);
+}
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('de-DE', {
+    day: '2-digit', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  }) + ' Uhr';
+}
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function render() {
+  const container = document.getElementById('entriesContainer');
+  const entries = loadEntries();
+  if (entries.length === 0) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✦ ✦ ✦</div>
+        <div class="empty-text">
+          Noch keine Einträge.
+          <small>Sei der erste Gast, der Lara eine Nachricht hinterlässt.</small>
+        </div>
+      </div>`;
+    return;
+  }
+  container.innerHTML = entries.slice().reverse().map(e => {
+    const body = e.photo
+      ? `<img class="entry-photo" src="${e.photo}" alt="Foto von ${escapeHtml(e.name)}" loading="lazy">`
+      : `<div class="entry-message">${escapeHtml(e.message)}</div>`;
+    return `
+      <div class="entry" data-id="${e.id}">
+        <div class="entry-header">
+          <span class="entry-name">${escapeHtml(e.name)}</span>
+          <div class="entry-meta">
+            <span class="entry-date">${formatDate(e.date)}</span>
+            <button class="delete-btn" data-delete="${e.id}" title="Löschen">✕</button>
+          </div>
+        </div>
+        ${body}
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-delete');
+      if (confirm('Diesen Eintrag wirklich löschen?')) {
+        const updated = loadEntries().filter(e => String(e.id) !== id);
+        try { saveEntries(updated); render(); }
+        catch { alert('Fehler beim Löschen.'); }
+      }
+    });
+  });
+}
+
+/* =========================================================
+   FOTO-AUSWAHL (nur Kamera)
+========================================================= */
+let selectedPhotoFile = null;
+const cameraInput = document.getElementById('photoCameraInput');
+const photoPreview = document.getElementById('photoPreview');
+const photoPreviewImg = document.getElementById('photoPreviewImg');
+const photoInfo = document.getElementById('photoInfo');
+
+document.getElementById('photoCameraBtn').addEventListener('click', () => cameraInput.click());
+cameraInput.addEventListener('change', onPhotoSelect);
+
+function onPhotoSelect(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert('Bitte wähle eine Bilddatei.');
+    e.target.value = '';
+    return;
+  }
+  if (file.size > 25 * 1024 * 1024) {
+    alert('Das Foto ist zu groß (max. 25 MB).');
+    e.target.value = '';
+    return;
+  }
+  selectedPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoPreviewImg.src = ev.target.result;
+    photoPreview.style.display = 'block';
+    photoInfo.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+document.getElementById('photoRemoveBtn').addEventListener('click', () => {
+  selectedPhotoFile = null;
+  photoPreview.style.display = 'none';
+  photoInfo.style.display = 'none';
+  photoPreviewImg.src = '';
+});
+
+/* =========================================================
+   SCHRIFTEN LADEN
+========================================================= */
+async function ensureFontsLoaded() {
+  if (!document.fonts || !document.fonts.load) return;
+  try {
+    await Promise.all([
+      document.fonts.load('italic 400 40px "Playfair Display"'),
+      document.fonts.load('400 20px "Cormorant Garamond"'),
+      document.fonts.load('500 20px "Cormorant Garamond"'),
+      document.fonts.load('600 20px "Cormorant Garamond"')
+    ]);
+    await document.fonts.ready;
+  } catch (e) { /* Fallback */ }
+}
+
+/* =========================================================
+   FOTO + TEXT KOMPOSIT
+========================================================= */
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'));
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => reject(new Error('Datei konnte nicht gelesen werden'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  const paragraphs = String(text).split('\n');
+  for (const para of paragraphs) {
+    if (!para.trim()) { lines.push(''); continue; }
+    const words = para.split(/\s+/);
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+  }
+  return lines.length ? lines : [''];
+}
+
+function drawSparkleStar(ctx, x, y, size, color, glowColor) {
+  ctx.save();
+  ctx.shadowColor = glowColor || color;
+  ctx.shadowBlur = size * 1.5;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.quadraticCurveTo(x, y, x + size, y);
+  ctx.quadraticCurveTo(x, y, x, y + size);
+  ctx.quadraticCurveTo(x, y, x - size, y);
+  ctx.quadraticCurveTo(x, y, x, y - size);
+  ctx.fill();
+  ctx.restore();
+}
+
+async function compositePhoto(file, name, message) {
+  const img = await loadImageFromFile(file);
+  const maxW = 900;
+  let w = img.naturalWidth || img.width;
+  let h = img.naturalHeight || img.height;
+  if (w > maxW) {
+    h = Math.round(h * maxW / w);
+    w = maxW;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const pad = Math.round(w * 0.06);
+  const maxTextW = w - pad * 2;
+  const nameSize = Math.max(22, Math.round(w * 0.058));
+  const msgSize = Math.max(14, Math.round(w * 0.026));
+  const lineHeight = msgSize * 1.5;
+  const nameLineHeight = nameSize * 1.35;
+
+  ctx.font = `400 ${msgSize}px 'Cormorant Garamond', Georgia, serif`;
+  const msgLines = wrapText(ctx, message, maxTextW);
+  const msgH = msgLines.length * lineHeight;
+  const contentH = nameLineHeight + 14 + msgH;
+  const overlayH = contentH + pad * 2;
+
+  /* Verlauf unten */
+  const gradTop = Math.max(0, h - overlayH - 40);
+  const grad = ctx.createLinearGradient(0, gradTop, 0, h);
+  grad.addColorStop(0, 'rgba(20, 10, 15, 0)');
+  grad.addColorStop(0.35, 'rgba(20, 10, 15, 0.7)');
+  grad.addColorStop(1, 'rgba(15, 6, 10, 0.96)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, gradTop, w, h - gradTop);
+
+  /* Wasserzeichen oben: LARA · 18 (mit Zahl) */
+  const wmSize = Math.max(11, Math.round(w * 0.022));
+  ctx.font = `500 ${wmSize}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#d4b87d';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+  ctx.shadowBlur = 6;
+  ctx.fillText('L A R A   ·   1 8', w / 2, pad + wmSize / 2);
+
+  /* Glitzer neben Wasserzeichen */
+  const wmStarSize = wmSize * 0.6;
+  drawSparkleStar(ctx, w * 0.26, pad + wmSize / 2, wmStarSize, '#e8d5a3', 'rgba(232,213,163,0.9)');
+  drawSparkleStar(ctx, w * 0.74, pad + wmSize / 2, wmStarSize * 0.8, '#e4eaf0', 'rgba(228,234,240,0.9)');
+
+  /* Name */
+  ctx.textBaseline = 'middle';
+  ctx.font = `italic 400 ${nameSize}px 'Playfair Display', Georgia, serif`;
+  ctx.fillStyle = '#e8d5a3';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+  ctx.shadowBlur = 10;
+  const nameY = h - overlayH + pad + nameLineHeight / 2;
+  ctx.fillText(name, w / 2, nameY);
+
+  /* Trennlinie */
+  const lineY = nameY + nameLineHeight / 2;
+  const lineW = Math.min(maxTextW * 0.4, 110);
+  const lineGrad = ctx.createLinearGradient(w / 2 - lineW / 2, 0, w / 2 + lineW / 2, 0);
+  lineGrad.addColorStop(0, 'rgba(201, 168, 106, 0)');
+  lineGrad.addColorStop(0.2, 'rgba(201, 168, 106, 0.85)');
+  lineGrad.addColorStop(0.5, 'rgba(228, 234, 240, 0.95)');
+  lineGrad.addColorStop(0.8, 'rgba(201, 168, 106, 0.85)');
+  lineGrad.addColorStop(1, 'rgba(201, 168, 106, 0)');
+  ctx.fillStyle = lineGrad;
+  ctx.shadowBlur = 0;
+  ctx.fillRect(w / 2 - lineW / 2, lineY, lineW, 1);
+
+  /* Glitzersterne neben Name */
+  const nameTextW = ctx.measureText(name).width;
+  const starSize = nameSize * 0.16;
+  drawSparkleStar(ctx, w / 2 - nameTextW / 2 - starSize * 2.2, nameY, starSize, '#e4eaf0', 'rgba(228,234,240,0.9)');
+  drawSparkleStar(ctx, w / 2 + nameTextW / 2 + starSize * 2.2, nameY - nameSize * 0.1, starSize * 1.2, '#e8d5a3', 'rgba(232,213,163,0.9)');
+
+  /* Nachricht */
+  ctx.textBaseline = 'top';
+  ctx.font = `400 ${msgSize}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.fillStyle = '#f2e8d8';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+  ctx.shadowBlur = 4;
+  let y = h - overlayH + pad + nameLineHeight + 14;
+  for (const line of msgLines) {
+    ctx.fillText(line, w / 2, y);
+    y += lineHeight;
+  }
+
+  let dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+  if (dataUrl.length > MAX_PHOTO_CHARS) dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+  if (dataUrl.length > MAX_PHOTO_CHARS) {
+    const c2 = document.createElement('canvas');
+    c2.width = Math.round(w * 0.75);
+    c2.height = Math.round(h * 0.75);
+    c2.getContext('2d').drawImage(canvas, 0, 0, c2.width, c2.height);
+    dataUrl = c2.toDataURL('image/jpeg', 0.6);
+  }
+  return dataUrl;
+}
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+document.getElementById('guestbookForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nameEl = document.getElementById('name');
+  const messageEl = document.getElementById('message');
+  const name = nameEl.value.trim();
+  const message = messageEl.value.trim();
+  if (!name || !message) return;
+
+  const submitBtn = document.getElementById('submitBtn');
+  const originalText = submitBtn.textContent;
+
+  let photoData = null;
+  if (selectedPhotoFile) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Foto wird verarbeitet …';
+    try {
+      await ensureFontsLoaded();
+      photoData = await compositePhoto(selectedPhotoFile, name, message);
+    } catch (err) {
+      alert('Foto konnte nicht verarbeitet werden: ' + (err.message || err));
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+  }
+
+  const entry = {
+    id: Date.now() + Math.random(),
+    name, message,
+    date: new Date().toISOString()
+  };
+  if (photoData) entry.photo = photoData;
+
+  const entries = loadEntries();
+  entries.push(entry);
+  try { saveEntries(entries); }
+  catch (err) {
+    alert('Der Speicher ist voll. Bitte lösche ältere Einträge, um Platz zu schaffen.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+    return;
+  }
+
+  render();
+  document.getElementById('guestbookForm').reset();
+  selectedPhotoFile = null;
+  photoPreview.style.display = 'none';
+  photoInfo.style.display = 'none';
+  photoPreviewImg.src = '';
+  nameEl.focus();
+  submitBtn.disabled = false;
+  submitBtn.textContent = originalText;
+
+  sparkleBurst();
+});
+
+function sparkleBurst() {
+  const symbols = ['✦', '✧', '◆', '·'];
+  for (let i = 0; i < 16; i++) {
+    const el = document.createElement('div');
+    const isGold = Math.random() > 0.45;
+    const color = isGold ? '#e8d5a3' : '#d6dee6';
+    const glow = isGold ? 'rgba(232,213,163,0.95)' : 'rgba(214,222,230,0.95)';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    el.style.cssText = `
+      position: fixed;
+      left: ${50 + (Math.random() - 0.5) * 26}%;
+      top: 62%;
+      color: ${color};
+      font-size: ${8 + Math.random() * 14}px;
+      pointer-events: none;
+      z-index: 9999;
+      transition: all ${1.6 + Math.random() * 1.4}s cubic-bezier(0.2, 0.7, 0.3, 1);
+      opacity: 1;
+      text-shadow: 0 0 10px ${glow}, 0 0 3px ${glow};
+    `;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.transform = `translate(${(Math.random() - 0.5) * 280}px, ${-180 - Math.random() * 260}px) rotate(${Math.random() * 360}deg)`;
+      el.style.opacity = '0';
+    });
+    setTimeout(() => el.remove(), 3500);
+  }
+}
+
+/* =========================================================
+   QR-CODE
+========================================================= */
+const QR_URL_KEY = 'lara_qr_custom_url';
+const qrModal = document.getElementById('qrModal');
+const qrFab = document.getElementById('qrFab');
+
+function getQRUrl() {
+  const custom = localStorage.getItem(QR_URL_KEY);
+  if (custom && custom.trim()) return custom.trim();
+  return window.location.href;
+}
+function isLocalUrl(url) {
+  return url.startsWith('file://')
+      || url.includes('localhost')
+      || url.includes('127.0.0.1')
+      || url.startsWith('http://192.168.')
+      || url.startsWith('http://10.');
+}
+
+function renderQR() {
+  const url = getQRUrl();
+  const box = document.getElementById('qrCodeBox');
+  const urlDisplay = document.getElementById('qrUrlDisplay');
+  urlDisplay.textContent = url;
+  box.innerHTML = '';
+
+  if (isLocalUrl(url)) {
+    const warn = document.createElement('div');
+    warn.className = 'qr-warning';
+    warn.innerHTML = `<strong>Hinweis</strong>
+      Diese Seite ist lokal geöffnet. Der QR-Code funktioniert erst, wenn
+      die Seite online gehostet wird. Über „URL ändern" kannst du die
+      echte Adresse hinterlegen.`;
+    box.appendChild(warn);
+  }
+
+  const makeImg = (src) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'QR-Code zum Gästebuch';
+    img.className = 'qr-image';
+    box.appendChild(img);
+  };
+
+  if (typeof QRCode === 'undefined') {
+    makeImg('https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=8&data=' + encodeURIComponent(url));
+    return;
+  }
+  QRCode.toDataURL(url, {
+    width: 360, margin: 2,
+    errorCorrectionLevel: 'H',
+    color: { dark: '#1a0a14', light: '#ffffff' }
+  }).then(makeImg).catch(err => {
+    box.innerHTML = `<div class="qr-error">QR-Code konnte nicht erstellt werden.<br><small>${err.message || err}</small></div>`;
+  });
+}
+
+function openModal() {
+  qrModal.classList.add('open');
+  qrModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  qrModal.classList.remove('open');
+  qrModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  document.getElementById('qrEditPanel').style.display = 'none';
+}
+
+qrFab.addEventListener('click', openModal);
+document.getElementById('qrModalClose').addEventListener('click', closeModal);
+qrModal.addEventListener('click', (e) => { if (e.target === qrModal) closeModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && qrModal.classList.contains('open')) closeModal();
+});
+
+document.getElementById('qrPrintBtn').addEventListener('click', () => {
+  document.body.classList.add('printing-qr');
+  window.print();
+});
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-qr');
+});
+
+document.getElementById('qrEditBtn').addEventListener('click', () => {
+  const panel = document.getElementById('qrEditPanel');
+  const isHidden = panel.style.display === 'none';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    document.getElementById('qrCustomUrl').value = localStorage.getItem(QR_URL_KEY) || '';
+    document.getElementById('qrCustomUrl').focus();
+  }
+});
+
+document.getElementById('qrSaveUrlBtn').addEventListener('click', () => {
+  let val = document.getElementById('qrCustomUrl').value.trim();
+  if (!val) { alert('Bitte eine URL eingeben.'); return; }
+  if (!/^https?:\/\//i.test(val)) val = 'https://' + val;
+  try { new URL(val); } catch { alert('Das ist keine gültige URL.'); return; }
+  localStorage.setItem(QR_URL_KEY, val);
+  renderQR();
+  document.getElementById('qrEditPanel').style.display = 'none';
+});
+
+document.getElementById('qrResetUrlBtn').addEventListener('click', () => {
+  localStorage.removeItem(QR_URL_KEY);
+  document.getElementById('qrCustomUrl').value = '';
+  renderQR();
+  document.getElementById('qrEditPanel').style.display = 'none';
+});
+
+/* =========================================================
+   INIT
+========================================================= */
+initSparkles();
+render();
+renderQR();
+</script>
+</body>
+</html>
