@@ -25,7 +25,6 @@
     --muted: #8a6273;
     --border: rgba(201, 168, 106, 0.28);
     --border-strong: rgba(201, 168, 106, 0.55);
-    --border-silver: rgba(184, 194, 204, 0.22);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -302,7 +301,7 @@
     margin-bottom: 10px;
   }
 
-  input[type="text"], input[type="url"], textarea {
+  input[type="text"], textarea {
     width: 100%;
     padding: 14px 18px;
     margin-bottom: 24px;
@@ -868,54 +867,6 @@
     color: var(--bg-1);
     border-color: var(--gold-light);
   }
-  .qr-btn.qr-secondary {
-    border-color: var(--border);
-    color: var(--cream-dim);
-  }
-  .qr-btn.qr-secondary:hover {
-    background: rgba(201, 168, 106, 0.08);
-    color: var(--gold);
-    border-color: var(--gold);
-  }
-  .qr-edit-panel {
-    margin-top: 20px;
-    padding: 20px;
-    background: rgba(10, 4, 8, 0.4);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    text-align: left;
-  }
-  .qr-edit-panel label {
-    font-size: 10px;
-    margin-bottom: 10px;
-  }
-  .qr-edit-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .qr-edit-buttons .qr-btn { flex: 1; min-width: 110px; }
-  .qr-warning {
-    background: rgba(201, 168, 106, 0.08);
-    color: var(--cream-dim);
-    padding: 14px 16px;
-    border-radius: 1px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    border-left: 2px solid var(--gold);
-    text-align: left;
-    line-height: 1.6;
-    font-style: italic;
-  }
-  .qr-warning strong {
-    display: block;
-    margin-bottom: 6px;
-    font-style: normal;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    font-size: 10px;
-    color: var(--gold);
-  }
   .qr-loading, .qr-error {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -980,7 +931,6 @@
     body.printing-qr #qrModal .qr-hint { color: #555 !important; }
     body.printing-qr #qrModal .modal-close,
     body.printing-qr #qrModal .modal-actions,
-    body.printing-qr #qrModal .qr-edit-panel,
     body.printing-qr #qrModal .qr-url { display: none !important; }
     body.printing-qr #qrModal .qr-code-box {
       border: 1px solid #c9a86a !important;
@@ -1024,16 +974,7 @@
       </div>
       <div class="qr-url" id="qrUrlDisplay">…</div>
       <div class="modal-actions">
-        <button type="button" class="qr-btn qr-secondary" id="qrEditBtn">URL ändern</button>
         <button type="button" class="qr-btn" id="qrPrintBtn">Drucken</button>
-      </div>
-      <div class="qr-edit-panel" id="qrEditPanel" style="display:none;">
-        <label for="qrCustomUrl">Eigene Gästebuch-Adresse</label>
-        <input type="url" id="qrCustomUrl" placeholder="https://deine-seite.de/gaestebuch">
-        <div class="qr-edit-buttons">
-          <button type="button" class="qr-btn qr-secondary" id="qrResetUrlBtn">Zurücksetzen</button>
-          <button type="button" class="qr-btn" id="qrSaveUrlBtn">Speichern</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1092,6 +1033,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
+/* =========================================================
+   FESTE URL FÜR DEN QR-CODE
+========================================================= */
+const FIXED_QR_URL = 'https://m47ze1801.github.io/Gstebuch/';
+
 /* =========================================================
    AMBIENT SPARKLES
 ========================================================= */
@@ -1497,41 +1443,17 @@ function sparkleBurst() {
 }
 
 /* =========================================================
-   QR-CODE
+   QR-CODE (Feste URL)
 ========================================================= */
-const QR_URL_KEY = 'lara_qr_custom_url';
 const qrModal = document.getElementById('qrModal');
 const qrFab = document.getElementById('qrFab');
 
-function getQRUrl() {
-  const custom = localStorage.getItem(QR_URL_KEY);
-  if (custom && custom.trim()) return custom.trim();
-  return window.location.href;
-}
-function isLocalUrl(url) {
-  return url.startsWith('file://')
-      || url.includes('localhost')
-      || url.includes('127.0.0.1')
-      || url.startsWith('http://192.168.')
-      || url.startsWith('http://10.');
-}
-
 function renderQR() {
-  const url = getQRUrl();
+  const url = FIXED_QR_URL;
   const box = document.getElementById('qrCodeBox');
   const urlDisplay = document.getElementById('qrUrlDisplay');
   urlDisplay.textContent = url;
   box.innerHTML = '';
-
-  if (isLocalUrl(url)) {
-    const warn = document.createElement('div');
-    warn.className = 'qr-warning';
-    warn.innerHTML = `<strong>Hinweis</strong>
-      Diese Seite ist lokal geöffnet. Der QR-Code funktioniert erst, wenn
-      die Seite online gehostet wird. Über „URL ändern" kannst du die
-      echte Adresse hinterlegen.`;
-    box.appendChild(warn);
-  }
 
   const makeImg = (src) => {
     const img = document.createElement('img');
@@ -1563,7 +1485,6 @@ function closeModal() {
   qrModal.classList.remove('open');
   qrModal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
-  document.getElementById('qrEditPanel').style.display = 'none';
 }
 
 qrFab.addEventListener('click', openModal);
@@ -1579,33 +1500,6 @@ document.getElementById('qrPrintBtn').addEventListener('click', () => {
 });
 window.addEventListener('afterprint', () => {
   document.body.classList.remove('printing-qr');
-});
-
-document.getElementById('qrEditBtn').addEventListener('click', () => {
-  const panel = document.getElementById('qrEditPanel');
-  const isHidden = panel.style.display === 'none';
-  panel.style.display = isHidden ? 'block' : 'none';
-  if (isHidden) {
-    document.getElementById('qrCustomUrl').value = localStorage.getItem(QR_URL_KEY) || '';
-    document.getElementById('qrCustomUrl').focus();
-  }
-});
-
-document.getElementById('qrSaveUrlBtn').addEventListener('click', () => {
-  let val = document.getElementById('qrCustomUrl').value.trim();
-  if (!val) { alert('Bitte eine URL eingeben.'); return; }
-  if (!/^https?:\/\//i.test(val)) val = 'https://' + val;
-  try { new URL(val); } catch { alert('Das ist keine gültige URL.'); return; }
-  localStorage.setItem(QR_URL_KEY, val);
-  renderQR();
-  document.getElementById('qrEditPanel').style.display = 'none';
-});
-
-document.getElementById('qrResetUrlBtn').addEventListener('click', () => {
-  localStorage.removeItem(QR_URL_KEY);
-  document.getElementById('qrCustomUrl').value = '';
-  renderQR();
-  document.getElementById('qrEditPanel').style.display = 'none';
 });
 
 /* =========================================================
